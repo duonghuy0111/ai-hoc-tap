@@ -1,0 +1,14 @@
+services:
+  db:
+    image: ankane/pgvector
+    container_name: ai-hoc-tap-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: ai-hoc-tap
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
