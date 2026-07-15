@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         String        @default("user")
+  createdAt    DateTime      @default(now())
+  quizAttempts QuizAttempt[]
+  reminderLogs ReminderLog[]
+  subjects     Subject[]
+}
+
+model Subject {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  createdAt    DateTime      @default(now())
+  userId       String
+  chatMessages ChatMessage[]
+  materials    Material[]
+  quizzes      Quiz[]
+  studyTopics  StudyTopic[]
+  user         User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([userId, id])
+}
+
+model Material {
+  id            String          @id @default(cuid())
+  title         String
+  filePath      String
+  subjectId     String
+  createdAt     DateTime        @default(now())
+  status        String          @default("processing")
+  extractedText String?
+  subject       Subject         @relation(fields: [subjectId], references: [id])
+  chunks        MaterialChunk[]
+}
+
+model MaterialChunk {
+  id         String   @id @default(cuid())
+  materialId String
+  content    String
+  chunkIndex Int
+  page       Int?
+  createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  subjectId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+}
+
+model Quiz {
+  id        String        @id @default(cuid())
+  subjectId String
+  title     String
+  source    String        @default("ai_generated")
+  createdAt DateTime      @default(now())
+  questions Question[]
+  subject   Subject       @relation(fields: [subjectId], references: [id])
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id            String  @id @default(cuid())
+  quizId        String
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String
+  explanation   String?
+  quiz          Quiz    @relation(fields: [quizId], references: [id])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  userId      String
+  score       Float
+  answersJson Json
+  attemptedAt DateTime @default(now())
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model StudyTopic {
+  id             String        @id @default(cuid())
+  subjectId      String
+  title          String
+  summary        String?
+  masteryScore   Float         @default(0)
+  lastReviewedAt DateTime?
+  nextReviewAt   DateTime?
+  reminderLogs   ReminderLog[]
+  subject        Subject       @relation(fields: [subjectId], references: [id])
+}
+
+model ReminderLog {
+  id           String     @id @default(cuid())
+  userId       String
+  studyTopicId String
+  sentAt       DateTime   @default(now())
+  emailStatus  String
+  studyTopic   StudyTopic @relation(fields: [studyTopicId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+}
