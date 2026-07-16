@@ -55,7 +55,11 @@ model MaterialChunk {
   chunkIndex Int
   page       Int?
   createdAt  DateTime @default(now())
-  material   Material @relation(fields: [materialId], references: [id])
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  embedding Unsupported("vector(1536)")?
+  @@index([materialId])
+
 }
 
 model ChatMessage {
