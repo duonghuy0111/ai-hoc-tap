@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { promises as fs } from 'fs';
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import { ChunkingService } from './chunking.service';
 
 @Injectable()
 export class MaterialProcessingService {
-    constructor(private readonly prisma: PrismaService,) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly chunkingService: ChunkingService,
+    ) { }
     async process(materialId: string) {
         try {
             const material = await this.prisma.material.findUnique({
@@ -15,6 +19,20 @@ export class MaterialProcessingService {
             const text = await this.extractText(material.filePath,);
             console.log("===== PDFJS =====");
             console.log(text.substring(0, 1000));
+
+            const chunks = this.chunkingService.chunkText(text);
+            console.log(`----Chunking: sinh ra ${chunks.length} chunk-----`);
+
+            if (chunks.length > 0) {
+                await this.prisma.materialChunk.createMany({
+                    data: chunks.map((content, index) => ({
+                        materialId,
+                        content,
+                        chunkIndex: index,
+                        page: null,
+                    })),
+                });
+            }
 
             await this.prisma.material.update({
                 where: {
