@@ -57,7 +57,7 @@ model MaterialChunk {
   createdAt  DateTime @default(now())
   material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
-  embedding Unsupported("vector(1536)")?
+  embedding Unsupported("vector(768)")?
   @@index([materialId])
 
 }
