@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { StringValue } from 'ms';
+import { ActivityLogService } from 'src/activity-log/activity-log.service';
 
 @Injectable()
 export class AuthService {
@@ -14,12 +15,12 @@ export class AuthService {
         private readonly prisma: PrismaService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly activityLogService: ActivityLogService,
     ) { }
 
     async register(registerDto: RegisterDto) {
         const { name, email, password } = registerDto;
 
-        // Kiểm tra email đã tồn tại 
         const existingUser = await this.prisma.user.findUnique({
             where: {
                 email,
@@ -30,28 +31,20 @@ export class AuthService {
             throw new ConflictException('Email đã tồn tại');
         }
 
-        // Hash password 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Tạo User
         const user = await this.prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
             },
+            select: { id: true, name: true, email: true, role: true, createdAt: true },
         });
 
-        // Không trả password về Client
+        await this.activityLogService.log(user.id, 'auth.register');
         return {
-            message: 'Đăng ký thành công',
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                createdAt: user.createdAt,
-            },
+            message: 'Đăng ký thành công', user,
         };
     }
     async login(loginDto: LoginDto) {
@@ -77,21 +70,45 @@ export class AuthService {
                 'Email hoặc mật khẩu không đúng',
             );
         }
-        const payload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-        };
-
-        const accessToken = this.jwtService.sign(payload);
-
-        const refreshToken = this.jwtService.sign(payload, {
-            expiresIn: this.configService.getOrThrow<StringValue>('REFRESH_EXPIRES_IN'),
-        });
-
+        await this.activityLogService.log(user.id, 'auth.login');
+        const tokens = this.issueTokens(user.id, user.email, user.role);
         return {
-            accessToken: accessToken,
-            refreshToken: refreshToken,
+            ...tokens,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role },
         };
     }
+    async refresh(refreshToken: string) {
+        let payload: { sub: string; email: string; role: string; type: string };
+        try {
+
+            payload = this.jwtService.verify(refreshToken, {
+                secret: this.configService.getOrThrow<string>('REFRESH_SECRET'),
+            });
+        } catch {
+            throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+        }
+        if (payload.type !== 'refresh') {
+            throw new UnauthorizedException('Token không phải refresh token');
+        }
+
+        const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+        if (!user) {
+            throw new UnauthorizedException('Người dùng không tồn tại');
+        }
+        return this.issueTokens(user.id, user.email, user.role);
+    }
+    private issueTokens(userId: string, email: string, role: string) {
+        const accessToken = this.jwtService.sign(
+            { sub: userId, email, role, type: 'access' },
+        );
+        const refreshToken = this.jwtService.sign(
+            { sub: userId, email, role, type: 'refresh' },
+            {
+                secret: this.configService.getOrThrow<string>('REFRESH_SECRET'),
+                expiresIn: this.configService.getOrThrow<StringValue>('REFRESH_EXPIRES_IN')
+            },
+        );  
+        return { accessToken, refreshToken };
+    }
+
 }

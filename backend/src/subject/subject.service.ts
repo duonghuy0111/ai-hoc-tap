@@ -1,19 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
+import { ActivityLogService } from 'src/activity-log/activity-log.service';
 
 
 @Injectable()
 export class SubjectService {
-    constructor(private readonly prisma: PrismaService,) { }
+    private readonly logger = new Logger(SubjectService.name);
+
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly activityLogService: ActivityLogService,
+
+    ) { }
+
     async create(userId: string, dto: CreateSubjectDto,) {
-        return this.prisma.subject.create({
-            data: {
-                ...dto,
-                userId,
-            },
+        const subject = await this.prisma.subject.create({ data: { ...dto, userId } });
+        await this.activityLogService.log(userId, 'subject.create', {
+            entityType: 'Subject', entityId: subject.id, metadata: { name: subject.name },
         });
+        return subject;
     }
     async findAll(userId: string) {
         return this.prisma.subject.findMany({
@@ -26,19 +33,16 @@ export class SubjectService {
         });
     }
     async findOne(userId: string, id: string,) {
-        console.log('findOne userId =', userId);
-        console.log('findOne subjectId =', id);
-
         const subject = await this.prisma.subject.findFirst({
             where: {
                 id,
                 userId,
             },
         });
-        console.log('Subject found = ', subject);
-        
+
         if (!subject) {
-            throw new NotFoundException('Không tìm thấy môn học',)
+            this.logger.warn(`Không tìm thấy subject ${id} cho user ${userId}`);
+            throw new NotFoundException('Không tìm thấy môn học');
         };
         return subject;
     }
@@ -49,6 +53,10 @@ export class SubjectService {
             where: {
                 id: subject.id,
             },
+        });
+
+        await this.activityLogService.log(userId, 'subject.delete', {
+            entityType: 'Subject', entityId: subject.id, metadata: { name: subject.name },
         });
         return {
             message: 'Đã xóa môn học',

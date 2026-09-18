@@ -1,4 +1,3 @@
--- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -10,7 +9,6 @@ CREATE TABLE "User" (
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Subject" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -18,7 +16,6 @@ CREATE TABLE "Subject" (
     CONSTRAINT "Subject_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Material" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -28,8 +25,7 @@ CREATE TABLE "Material" (
     CONSTRAINT "Material_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
--- AddForeignKey
+
 ALTER TABLE "Material" ADD CONSTRAINT "Material_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

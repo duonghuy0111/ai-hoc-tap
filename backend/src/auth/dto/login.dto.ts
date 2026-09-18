@@ -1,11 +1,13 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class LoginDto {
     @IsString()
-    @IsEmail()
-    email: string;
+    @IsEmail({}, { message: 'Email không đúng định dạng' })
+    @Transform(({ value }) => value?.trim().toLowerCase())
+    email!: string;
 
     @IsString()
-    @IsNotEmpty()
-    password: string;
+    @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
+    password!: string;
 }

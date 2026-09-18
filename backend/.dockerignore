@@ -1,0 +1,10 @@
+node_modules
+dist
+generated
+coverage
+uploads/*
+!uploads/.gitkeep
+.env
+.env.*
+*.log
+.git

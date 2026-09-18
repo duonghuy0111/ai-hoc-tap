@@ -4,18 +4,15 @@
   - Added the required column `userId` to the `Subject` table without a default value. This is not possible if the table is not empty.
 
 */
--- AlterTable
+
 ALTER TABLE "Material" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'processing';
 
--- AlterTable
 ALTER TABLE "Subject" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN     "userId" TEXT NOT NULL;
 
--- AlterTable
 ALTER TABLE "User" ALTER COLUMN "role" SET DEFAULT 'user';
 
--- CreateTable
 CREATE TABLE "MaterialChunk" (
     "id" TEXT NOT NULL,
     "materialId" TEXT NOT NULL,
@@ -27,7 +24,6 @@ CREATE TABLE "MaterialChunk" (
     CONSTRAINT "MaterialChunk_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "ChatMessage" (
     "id" TEXT NOT NULL,
     "subjectId" TEXT NOT NULL,
@@ -38,7 +34,6 @@ CREATE TABLE "ChatMessage" (
     CONSTRAINT "ChatMessage_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Quiz" (
     "id" TEXT NOT NULL,
     "subjectId" TEXT NOT NULL,
@@ -49,7 +44,6 @@ CREATE TABLE "Quiz" (
     CONSTRAINT "Quiz_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Question" (
     "id" TEXT NOT NULL,
     "quizId" TEXT NOT NULL,
@@ -64,7 +58,6 @@ CREATE TABLE "Question" (
     CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "QuizAttempt" (
     "id" TEXT NOT NULL,
     "quizId" TEXT NOT NULL,
@@ -76,7 +69,6 @@ CREATE TABLE "QuizAttempt" (
     CONSTRAINT "QuizAttempt_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "StudyTopic" (
     "id" TEXT NOT NULL,
     "subjectId" TEXT NOT NULL,
@@ -89,7 +81,6 @@ CREATE TABLE "StudyTopic" (
     CONSTRAINT "StudyTopic_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "ReminderLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -100,32 +91,22 @@ CREATE TABLE "ReminderLog" (
     CONSTRAINT "ReminderLog_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
 ALTER TABLE "Subject" ADD CONSTRAINT "Subject_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "MaterialChunk" ADD CONSTRAINT "MaterialChunk_materialId_fkey" FOREIGN KEY ("materialId") REFERENCES "Material"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "ChatMessage" ADD CONSTRAINT "ChatMessage_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "Quiz" ADD CONSTRAINT "Quiz_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "Question" ADD CONSTRAINT "Question_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "QuizAttempt" ADD CONSTRAINT "QuizAttempt_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "QuizAttempt" ADD CONSTRAINT "QuizAttempt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "StudyTopic" ADD CONSTRAINT "StudyTopic_subjectId_fkey" FOREIGN KEY ("subjectId") REFERENCES "Subject"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "ReminderLog" ADD CONSTRAINT "ReminderLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- AddForeignKey
 ALTER TABLE "ReminderLog" ADD CONSTRAINT "ReminderLog_studyTopicId_fkey" FOREIGN KEY ("studyTopicId") REFERENCES "StudyTopic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
